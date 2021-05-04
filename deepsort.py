@@ -33,15 +33,16 @@ class DeepSort(object):
             tlwh, xyxy, confidences = results
             if not confidences.tolist():
                 return None
-        # generate detections
+        # 提取每个bbox的feature
         features = self.get_features(xyxy, ori_img)
+        # 过滤掉置信度小于self.min_confidence的bbox，生成detections
         detections = [Detection(tlwh[i], conf, features[i]) for i,conf in enumerate(confidences)]
 
-        # update tracker
+        # 更新tracker
         self.tracker.predict()
         self.tracker.update(detections)
 
-        # output bbox identities
+        # 输出bbox特征
         outputs = []
         for track in self.tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
