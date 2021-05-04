@@ -121,17 +121,21 @@ def matching_cascade(
 
     unmatched_detections = detection_indices
     matches = []
+    # 由小到大依次对每个level的tracks做匹配
     for level in range(cascade_depth):
+        # 如果没有detections，退出循环
         if len(unmatched_detections) == 0:  # No detections left
             break
-
+        # 当前level的所有tracks索引
         track_indices_l = [
             k for k in track_indices
             if tracks[k].time_since_update == 1 + level
         ]
+        # 如果当前level没有track，继续
         if len(track_indices_l) == 0:  # Nothing to match at this level
             continue
 
+        # 匈牙利匹配
         matches_l, _, unmatched_detections = \
             min_cost_matching(
                 distance_metric, max_distance, tracks, detections,
