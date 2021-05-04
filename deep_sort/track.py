@@ -120,8 +120,8 @@ class Track:
 
         """
         self.mean, self.covariance = kf.predict(self.mean, self.covariance)
-        self.age += 1
-        self.time_since_update += 1
+        self.age += 1     # 该track自出现以来的总帧数加1
+        self.time_since_update += 1     # 该track自最近一次更新以来的总帧数加1
 
     def update(self, kf, detection):
         """Perform Kalman filter measurement update step and update the feature
