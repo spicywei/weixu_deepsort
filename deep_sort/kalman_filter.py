@@ -46,9 +46,7 @@ class KalmanFilter(object):
             self._motion_mat[i, ndim + i] = dt
         self._update_mat = np.eye(ndim, 2 * ndim)
 
-        # Motion and observation uncertainty are chosen relative to the current
-        # state estimate. These weights control the amount of uncertainty in
-        # the model. This is a bit hacky.
+        # 选择相对于当前状态估计的运动和观测不确定性。这些权重控制了模型中的不确定性。这有点粗糙。
         self._std_weight_position = 1. / 20
         self._std_weight_velocity = 1. / 160
 
@@ -114,11 +112,11 @@ class KalmanFilter(object):
             self._std_weight_velocity * mean[3],
             1e-5,
             self._std_weight_velocity * mean[3]]
-        motion_cov = np.diag(np.square(np.r_[std_pos, std_vel]))
+        motion_cov = np.diag(np.square(np.r_[std_pos, std_vel]))  # 初始化噪声矩阵Q
 
-        mean = np.dot(self._motion_mat, mean)
+        mean = np.dot(self._motion_mat, mean)  # x' = Fx
         covariance = np.linalg.multi_dot((
-            self._motion_mat, covariance, self._motion_mat.T)) + motion_cov
+            self._motion_mat, covariance, self._motion_mat.T)) + motion_cov  # P' = FPF(T) + Q
 
         return mean, covariance
 
@@ -144,11 +142,11 @@ class KalmanFilter(object):
             self._std_weight_position * mean[3],
             1e-1,
             self._std_weight_position * mean[3]]
-        innovation_cov = np.diag(np.square(std))
+        innovation_cov = np.diag(np.square(std))    # 初始化噪声矩阵R
 
-        mean = np.dot(self._update_mat, mean)
+        mean = np.dot(self._update_mat, mean)       # 将均值向量映射到检测空间，即Hx'
         covariance = np.linalg.multi_dot((
-            self._update_mat, covariance, self._update_mat.T))
+            self._update_mat, covariance, self._update_mat.T))   # 将协方差矩阵映射到检测空间，即HP'H^T
         return mean, covariance + innovation_cov
 
     def update(self, mean, covariance, measurement):
@@ -171,16 +169,22 @@ class KalmanFilter(object):
             Returns the measurement-corrected state distribution.
 
         """
+        # 将mean和covariance映射到检测空间，得到Hx'和S
         projected_mean, projected_cov = self.project(mean, covariance)
 
+        # 矩阵分解（这一步没看懂）
         chol_factor, lower = scipy.linalg.cho_factor(
             projected_cov, lower=True, check_finite=False)
+        # 计算卡尔曼增益K（这一步没看明白是如何对应上公式5的，求线代大佬指教）
         kalman_gain = scipy.linalg.cho_solve(
             (chol_factor, lower), np.dot(covariance, self._update_mat.T).T,
             check_finite=False).T
+        # z - Hx'
         innovation = measurement - projected_mean
 
+        # x = x' + Ky
         new_mean = mean + np.dot(innovation, kalman_gain.T)
+        # P = (I - KH)P'
         new_covariance = covariance - np.linalg.multi_dot((
             kalman_gain, projected_cov, kalman_gain.T))
         return new_mean, new_covariance
