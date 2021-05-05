@@ -52,21 +52,27 @@ def min_cost_matching(
     if len(detection_indices) == 0 or len(track_indices) == 0:
         return [], track_indices, detection_indices  # Nothing to match.
 
+    # 计算代价矩阵
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
-    indices = linear_assignment(cost_matrix)
+    indices = linear_assignment(cost_matrix)      # 执行匈牙利算法，得到匹配成功的索引对，行索引为tracks的索引，列索引为detections的索引
 
     matches, unmatched_tracks, unmatched_detections = [], [], []
+    # 找出未匹配的detections
     for col, detection_idx in enumerate(detection_indices):
         if col not in indices[:, 1]:
             unmatched_detections.append(detection_idx)
+    # 找出未匹配的tracks
     for row, track_idx in enumerate(track_indices):
         if row not in indices[:, 0]:
             unmatched_tracks.append(track_idx)
+        
+    # 遍历匹配的(track, detection)索引对
     for row, col in indices:
         track_idx = track_indices[row]
         detection_idx = detection_indices[col]
+        # 如果相应的cost大于阈值max_distance，也视为未匹配成功
         if cost_matrix[row, col] > max_distance:
             unmatched_tracks.append(track_idx)
             unmatched_detections.append(detection_idx)
