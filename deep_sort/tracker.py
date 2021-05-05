@@ -64,16 +64,18 @@ class Tracker:
             A list of detections at the current time step.
 
         """
-        # Run matching cascade.
+        # 得到匹配对、未匹配的tracks、未匹配的dectections
         matches, unmatched_tracks, unmatched_detections = \
             self._match(detections)
 
-        # Update track set.
+        # 对于每个匹配成功的track，用其对应的detection进行更新
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(
                 self.kf, detections[detection_idx])
+        # 对于未匹配的成功的track，将其标记为丢失
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
+        # 对于未匹配成功的detection，初始化为新的track
         for detection_idx in unmatched_detections:
             self._initiate_track(detections[detection_idx])
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
