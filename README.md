@@ -20,7 +20,7 @@
 
 ## **快速使用**
 
-* 同步代码：
+*  同步代码：
 
 ```shell
 $ git clone https://github.com/weixu927/weixu_deepsort.git
